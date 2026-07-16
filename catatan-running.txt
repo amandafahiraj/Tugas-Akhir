@@ -1,0 +1,12 @@
+cd /d/gpstracker/trackhub
+php artisan mqtt:listen
+
+cd /d/gpstracker/trackhub
+php artisan serve --host=0.0.0.0 --port=8000
+
+D:\gpstracker\MQTT\mosquitto\mosquitto.exe -c D:\gpstracker\MQTT\mosquitto-local.conf -v
+
+ganti ip wifi 
+docker compose down 
+docker compose up -d
+

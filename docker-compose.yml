@@ -1,0 +1,92 @@
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: trackhub-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: gpsdb
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # phpMyAdmin for Database UI Management
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: trackhub-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ""
+    depends_on:
+      - db
+
+  # Mosquitto MQTT Broker
+  mqtt:
+    image: eclipse-mosquitto:latest
+    container_name: trackhub-mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./MQTT/mosquitto-docker.conf:/mosquitto/config/mosquitto.conf
+      - ./MQTT/logs:/mosquitto/log
+      - ./MQTT/data:/mosquitto/data
+
+  # Laravel Application (Web Server)
+  app:
+    build:
+      context: ./trackhub
+      dockerfile: Dockerfile
+    container_name: trackhub-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./trackhub:/var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - MQTT_HOST=mqtt
+    depends_on:
+      - db
+      - mqtt
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+  # Laravel MQTT Listener (Background Worker)
+  mqtt-listener:
+    build:
+      context: ./trackhub
+      dockerfile: Dockerfile
+    container_name: trackhub-mqtt-listener
+    restart: unless-stopped
+    volumes:
+      - ./trackhub:/var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - MQTT_HOST=mqtt
+    depends_on:
+      - db
+      - mqtt
+    command: php artisan mqtt:listen
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: trackhub-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+
+volumes:
+  db_data:
