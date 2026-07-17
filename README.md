@@ -87,14 +87,14 @@ graph TD
 
 ## 🚀 Instalasi & Konfigurasi Lokal
 
-Anda dapat menjalankan proyek ini di komputer lokal dengan dua cara: menggunakan **Docker Compose** (sangat disarankan) atau **secara manual**.
+dapat menjalankan proyek ini di komputer/laptop lokal dengan dua cara: menggunakan **Docker Compose** (sangat disarankan) atau **secara manual**.
 
 ### Metode A: Menggunakan Docker Compose (Paling Cepat)
 
-1. Pastikan **Docker** dan **Docker Compose** sudah terpasang di komputer Anda.
+1. Pastikan **Docker** dan **Docker Compose** sudah terpasang di komputer/laptop.
 2. Clone repositori ini dan buka foldernya:
    ```bash
-   git clone <url-repositori-anda>
+   git clone <url-repositori>
    cd gpstracker
    ```
 3. Salin file konfigurasi environment di dalam folder `trackhub`:
@@ -123,16 +123,16 @@ Anda dapat menjalankan proyek ini di komputer lokal dengan dua cara: menggunakan
 
 ### Metode B: Instalasi Manual (Tanpa Docker)
 
-Jika Anda ingin menjalankan komponen backend secara terpisah satu per satu di komputer lokal Anda:
+Jika ingin menjalankan komponen backend secara terpisah satu per satu di komputer/laptop lokal:
 
 #### 1. Jalankan MQTT Broker
-Unduh dan pasang [Eclipse Mosquitto](https://mosquitto.org/download/). Jalankan broker secara lokal menggunakan file konfigurasi Anda:
+Unduh dan pasang [Eclipse Mosquitto](https://mosquitto.org/download/). Jalankan broker secara lokal menggunakan file konfigurasi:
 ```bash
 mosquitto.exe -c ./MQTT/mosquitto-local.conf -v
 ```
 
 #### 2. Buat Database
-Nyalakan server MySQL lokal Anda dan buat database baru bernama `gpsdb`.
+Nyalakan server MySQL lokal dan buat database baru bernama `gpsdb`.
 
 #### 3. Jalankan Server Laravel
 1. Masuk ke direktori Laravel:
@@ -146,7 +146,7 @@ Nyalakan server MySQL lokal Anda dan buat database baru bernama `gpsdb`.
 3. Salin dan sesuaikan isi file `.env`:
    ```bash
    cp .env.example .env
-   # Update nilai DB_HOST, DB_PASSWORD, dan MQTT_HOST (sesuaikan dengan IP broker lokal Anda)
+   # Update nilai DB_HOST, DB_PASSWORD, dan MQTT_HOST (sesuaikan dengan IP broker lokal)
    ```
 4. Buat kunci aplikasi (Application Key) dan jalankan migrasi database:
    ```bash
@@ -182,14 +182,14 @@ php artisan mqtt:listen
    - `SD` (bawaan)
    - `SPI` (bawaan)
 3. Buka file sketsa `kodeArduino/kode/kode.ino`.
-4. Sesuaikan konfigurasi IP server Anda di dalam kode tersebut:
+4. Sesuaikan konfigurasi IP server di dalam kode tersebut:
    ```cpp
-   const char* mqttBroker = "IP_BROKER_ANDA"; // Ganti dengan IP komputer lokal Anda atau IP Publik AWS EC2 Anda
+   const char* mqttBroker = "IP_BROKER"; // Ganti dengan IP komputer lokal atau IP Publik AWS EC2
    const uint16_t mqttPort = 1883;
    const char* mqttTopic = "trackhub/gps";
    ```
-5. Unggah (upload) program tersebut ke papan ESP32 Anda.
-6. Gunakan fitur **WiFiManager** untuk menghubungkan ESP32 ke jaringan WiFi lokal Anda (ESP32 akan membuat Access Point bernama `ESP32-GPS-Tracker` saat pertama kali dinyalakan agar Anda bisa login dan mengisi nama serta password WiFi rumah/lokasi Anda).
+5. Unggah (upload) program tersebut ke papan ESP32.
+6. Gunakan fitur **WiFiManager** untuk menghubungkan ESP32 ke jaringan WiFi lokal (ESP32 akan membuat Access Point bernama `ESP32-GPS-Tracker` saat pertama kali dinyalakan agar bisa login dan mengisi nama serta password WiFi rumah/lokasi).
 
 ---
 
@@ -200,11 +200,11 @@ php artisan mqtt:listen
    - Buka Port `80` (HTTP) & `443` (HTTPS)
    - Buka Port `22` (SSH)
    - Buka Port `1883` (Akses Broker MQTT dari modul ESP32)
-   - Buka Port `8080` (Opsional - phpMyAdmin, sebaiknya batasi hanya untuk IP Anda saja demi keamanan)
+   - Buka Port `8080` (Opsional - phpMyAdmin, sebaiknya batasi hanya untuk IP saja demi keamanan)
 3. **Instal Docker dan Docker Compose** pada server EC2 Ubuntu tersebut.
-4. Clone kode proyek Anda ke dalam server:
+4. Clone kode proyek ke dalam server:
    ```bash
-   git clone <url-repositori-anda> /var/www/gpstracker
+   git clone <url-repositori> /var/www/gpstracker
    cd /var/www/gpstracker
    ```
 5. Konfigurasi file `.env` di dalam folder `trackhub/`, pastikan untuk mengatur `APP_ENV=production` dan `APP_DEBUG=false`.
@@ -216,7 +216,7 @@ php artisan mqtt:listen
    ```bash
    docker compose exec app php artisan migrate --force
    ```
-8. Perbarui variabel `mqttBroker` di dalam program ESP32 Anda menggunakan **IP Publik AWS EC2** Anda, lalu unggah kembali program tersebut ke ESP32.
+8. Perbarui variabel `mqttBroker` di dalam program ESP32 menggunakan **IP Publik AWS EC2**, lalu unggah kembali program tersebut ke ESP32.
 
 ---
 
@@ -272,8 +272,11 @@ gpstracker/
 
 ---
 
-## 🤝 Kontribusi
-Kontribusi, laporan bug/isu, dan saran fitur baru sangat diterima. Silakan buat *Pull Request* atau ajukan *Issue* di repositori ini.
+##👤 Informasi Pengembang
+
+| Nama                          | NIM             | Prodi                    |
+| ----------------------------- | --------------- | ------------------------ |
+| Amanda Fahira Jurica          | 2301083022      | Teknik Komputer          |
 
 ## 📄 Lisensi
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+Proyek ini dikembangkan untuk keperluan akademik.
