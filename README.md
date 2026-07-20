@@ -10,31 +10,15 @@ Solusi pelacakan kendaraan berbasis IoT (Internet of Things) yang tangguh dan me
 
 ---
 
-## 🗺️ Arsitektur Sistem
+## 🎥 Video Demo Aplikasi
 
-```mermaid
-graph TD
-    subgraph Hardware ["Perangkat Keras IoT"]
-        NeoGPS["Neo-M8N GPS Module"] -->|NMEA Sentences / Serial| ESP32["ESP32 MCU"]
-        SDCard["SD Card Reader"] <-->|Offline Buffer / SPI| ESP32
-    end
+Untuk melihat bagaimana sistem pelacakan kendaraan ini bekerja secara real-time, silakan tonton video demo kami di YouTube dengan mengklik gambar di bawah ini:
 
-    subgraph AWS ["AWS EC2 Cloud Server / Local Docker"]
-        MQTT["Mosquitto MQTT Broker:1883"] <--|Publish Topic: trackhub/gps| ESP32
-        
-        subgraph LaravelApp ["Ekosistem Laravel & Docker"]
-            Listener["Artisan Command: mqtt:listen"] -->|Subscribes to Broker| MQTT
-            Listener -->|Validate & Save| MySQL["MySQL DB:3306"]
-            
-            WebUI["Laravel Web App:8000"] -->|Read coordinates| MySQL
-            Nginx["Nginx Reverse Proxy:80"] -->|Forward requests| WebUI
-        end
-        
-        PMA["phpMyAdmin:8080"] -->|DB Management UI| MySQL
-    end
-
-    User(("User / Browser")) -->|Access Dashboard| Nginx
-```
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=pDA0TN7Hc60">
+    <img src="https://img.youtube.com/vi/pDA0TN7Hc60/maxresdefault.jpg" alt="Video Demo Pelacakan Kendaraan IoT" width="80%" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" />
+  </a>
+</p>
 
 ---
 
