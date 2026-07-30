@@ -12,6 +12,10 @@ let historyLayer = null;
 let historyMarkerLayer = null;
 let historyMapMode = 'standard';
 let lastAddressKey = null;
+let lastHistoryRouteKey = null;
+let historyCurrentPage = 1;
+let logCurrentPage = 1;
+const itemsPerPage = 8;
 let activeView = 'dashboard';
 let isRefreshing = false;
 const addressCache = new Map();
@@ -307,7 +311,7 @@ const fetchRoadRoute = async (points) => {
     }
 };
 
-const drawHistoryRoute = (points) => {
+const drawHistoryRoute = (points, forceFit = false) => {
     try {
         if (historyLine) {
             historyLine.remove();
@@ -363,7 +367,7 @@ const drawHistoryRoute = (points) => {
         }).addTo(historyMarkerLayer);
 
         const bounds = historyLine.getBounds();
-        if (bounds.isValid()) {
+        if (bounds.isValid() && forceFit) {
             historyMap.fitBounds(bounds, { padding: [40, 40] });
         }
     } catch (error) {
@@ -371,7 +375,7 @@ const drawHistoryRoute = (points) => {
     }
 };
 
-const ensureHistoryMap = async () => {
+const ensureHistoryMap = async (forceFit = false) => {
     try {
         // Get dynamically filtered readings that have coordinates
         const readings = filteredReadings()
@@ -394,6 +398,7 @@ const ensureHistoryMap = async () => {
             } else {
                 historyMap.setView([-6.2, 106.82], 12);
             }
+            forceFit = true;
         }
 
         historyMap.invalidateSize();
@@ -408,14 +413,21 @@ const ensureHistoryMap = async () => {
                 historyMarkerLayer = null;
             }
             historyMap.setView([-6.2, 106.82], 12);
+            lastHistoryRouteKey = null;
             return;
         }
 
-        drawHistoryRoute(points);
+        const currentRouteKey = points.map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join('|');
+        const routeChanged = (currentRouteKey !== lastHistoryRouteKey);
+        if (routeChanged) {
+            lastHistoryRouteKey = currentRouteKey;
+        }
+
+        drawHistoryRoute(points, forceFit || routeChanged);
         const routedPoints = await fetchRoadRoute(points);
 
         if (activeView === 'history') {
-            drawHistoryRoute(routedPoints);
+            drawHistoryRoute(routedPoints, forceFit || routeChanged);
         }
 
         syncHistoryMapControls();
@@ -440,7 +452,18 @@ const filteredReadings = () => {
 };
 
 const renderTables = () => {
-    const historyRows = filteredReadings().slice(0, 8);
+    // 1. History Table Pagination
+    const historyReadings = filteredReadings();
+    const historyTotal = historyReadings.length;
+    const historyTotalPages = Math.max(1, Math.ceil(historyTotal / itemsPerPage));
+    
+    if (historyCurrentPage > historyTotalPages) {
+        historyCurrentPage = historyTotalPages;
+    }
+    
+    const historyStart = (historyCurrentPage - 1) * itemsPerPage;
+    const historyRows = historyReadings.slice(historyStart, historyStart + itemsPerPage);
+    
     document.getElementById('history-table').innerHTML = historyRows.length
         ? historyRows.map((reading) => `
             <tr>
@@ -452,14 +475,31 @@ const renderTables = () => {
         `).join('')
         : '<tr><td colspan="4">No tracking history available.</td></tr>';
 
+    set('history-page-info', `Halaman ${historyCurrentPage} dari ${historyTotalPages} (${historyTotal} data)`);
+    
+    const historyPrevBtn = document.getElementById('history-prev-btn');
+    if (historyPrevBtn) historyPrevBtn.disabled = historyCurrentPage === 1;
+    const historyNextBtn = document.getElementById('history-next-btn');
+    if (historyNextBtn) historyNextBtn.disabled = historyCurrentPage === historyTotalPages;
+
+    // 2. Log Table Pagination
     const logFilter = document.getElementById('log-filter')?.value ?? 'all';
-    const logRows = (appData.readings || [])
+    const allLogs = (appData.readings || [])
         .filter((reading) => {
             if (logFilter === 'all') return true;
             const isOffline = reading.offline === true || reading.offline === 1 || reading.offline === '1';
             return logFilter === 'offline' ? isOffline : !isOffline;
-        })
-        .slice(0, 8);
+        });
+        
+    const logTotal = allLogs.length;
+    const logTotalPages = Math.max(1, Math.ceil(logTotal / itemsPerPage));
+    
+    if (logCurrentPage > logTotalPages) {
+        logCurrentPage = logTotalPages;
+    }
+    
+    const logStart = (logCurrentPage - 1) * itemsPerPage;
+    const logRows = allLogs.slice(logStart, logStart + itemsPerPage);
 
     document.getElementById('log-table').innerHTML = logRows.length
         ? logRows.map((reading) => {
@@ -468,7 +508,7 @@ const renderTables = () => {
             const size = Math.max(0.8, JSON.stringify(reading).length / 1024).toFixed(1);
 
             let statusText = isOffline ? 'Offline (Synced)' : 'Real-time';
-            let statusClass = isOffline ? 'sent' : 'sent'; // both are sent (green badge)
+            let statusClass = isOffline ? 'sent' : 'sent';
 
             let statusHtml = `<span class="badge ${statusClass}"><span class="dot"></span>${statusText}</span>`;
             if (!hasGps) {
@@ -486,6 +526,13 @@ const renderTables = () => {
             `;
         }).join('')
         : '<tr><td colspan="5">No data log queue available.</td></tr>';
+
+    set('log-page-info', `Halaman ${logCurrentPage} dari ${logTotalPages} (${logTotal} data)`);
+    
+    const logPrevBtn = document.getElementById('log-prev-btn');
+    if (logPrevBtn) logPrevBtn.disabled = logCurrentPage === 1;
+    const logNextBtn = document.getElementById('log-next-btn');
+    if (logNextBtn) logNextBtn.disabled = logCurrentPage === logTotalPages;
 
     if (window.lucide) {
         lucide.createIcons();
@@ -508,7 +555,7 @@ const render = (data) => {
     const serverTime = data.server_time ? new Date(data.server_time) : new Date();
     const recordedAt = latest ? new Date(latest.recorded_at) : null;
     const isDeviceActive = latest && recordedAt && (serverTime - recordedAt) < 60 * 1000;
-    const hasGpsFix = latest && latest.latitude !== null && latest.longitude !== null;
+    const hasGpsFix = isDeviceActive && latest && latest.latitude !== null && latest.longitude !== null;
 
     set('total', data.total ?? 0);
     set('system-total', data.total ?? 0);
@@ -527,10 +574,10 @@ const render = (data) => {
         const label = devBadge.querySelector('.label');
         if (isDeviceActive) {
             devBadge.className = 'status-badge device-online';
-            label.textContent = 'Device: Active';
+            label.textContent = 'Alat: Aktif';
         } else {
             devBadge.className = 'status-badge device-offline';
-            label.textContent = 'Device: Inactive';
+            label.textContent = 'Alat: Tidak Aktif';
         }
     }
 
@@ -539,23 +586,23 @@ const render = (data) => {
         const label = gpsBadge.querySelector('.label');
         if (hasGpsFix) {
             gpsBadge.className = 'status-badge gps-fixed';
-            label.textContent = 'GPS: Locked';
+            label.textContent = 'GPS: Terkunci';
         } else {
             gpsBadge.className = 'status-badge gps-no-fix';
-            label.textContent = 'GPS: No Fix';
+            label.textContent = 'GPS: Belum Terkunci';
         }
     }
 
     // Update status di System View
-    set('system-device-status', isDeviceActive ? 'Active' : 'Inactive');
-    set('system-gps-lock', hasGpsFix ? 'GPS Fixed' : 'No Fix');
+    set('system-device-status', isDeviceActive ? 'Aktif' : 'Tidak Aktif');
+    set('system-gps-lock', hasGpsFix ? 'Terkunci' : 'Belum Terkunci');
 
     if (!latest) {
         set('connection-label', 'Waiting');
         set('stream-status', 'Waiting for GPS data from ESP32');
         set('system-connection', 'Waiting');
-        set('system-device-status', 'Waiting');
-        set('system-gps-lock', 'Waiting');
+        set('system-device-status', 'Tidak Aktif');
+        set('system-gps-lock', 'Belum Terkunci');
         renderTables();
         return;
     }
@@ -606,7 +653,7 @@ const showView = (view, pushState = true) => {
     });
 
     if (view === 'history') {
-        setTimeout(ensureHistoryMap, 50);
+        setTimeout(() => ensureHistoryMap(true), 50);
     }
 
     if (view === 'dashboard' && map) {
@@ -638,8 +685,8 @@ const refreshData = async () => {
     } catch (error) {
         set('stream-status', 'Unable to refresh GPS data');
         set('system-connection', 'Offline');
-        set('system-device-status', 'Offline');
-        set('system-gps-lock', 'Offline');
+        set('system-device-status', 'Tidak Aktif');
+        set('system-gps-lock', 'Belum Terkunci');
         const devBadge = document.getElementById('device-status-badge');
         if (devBadge) {
             devBadge.className = 'status-badge device-offline';
@@ -665,13 +712,57 @@ document.querySelectorAll('[data-history-map-mode]').forEach((button) => {
 });
 
 const handleHistoryFilterChange = () => {
+    historyCurrentPage = 1;
     renderTables();
-    ensureHistoryMap();
+    ensureHistoryMap(true);
 };
 
 document.getElementById('history-search').addEventListener('click', handleHistoryFilterChange);
 document.getElementById('history-status').addEventListener('change', handleHistoryFilterChange);
-document.getElementById('log-filter').addEventListener('change', renderTables);
+document.getElementById('log-filter').addEventListener('change', () => {
+    logCurrentPage = 1;
+    renderTables();
+});
+
+// Pagination Event Listeners
+document.getElementById('history-prev-btn')?.addEventListener('click', () => {
+    if (historyCurrentPage > 1) {
+        historyCurrentPage--;
+        renderTables();
+    }
+});
+
+document.getElementById('history-next-btn')?.addEventListener('click', () => {
+    const historyReadings = filteredReadings();
+    const historyTotalPages = Math.max(1, Math.ceil(historyReadings.length / itemsPerPage));
+    if (historyCurrentPage < historyTotalPages) {
+        historyCurrentPage++;
+        renderTables();
+    }
+});
+
+document.getElementById('log-prev-btn')?.addEventListener('click', () => {
+    if (logCurrentPage > 1) {
+        logCurrentPage--;
+        renderTables();
+    }
+});
+
+document.getElementById('log-next-btn')?.addEventListener('click', () => {
+    const logFilter = document.getElementById('log-filter')?.value ?? 'all';
+    const allLogs = (appData.readings || [])
+        .filter((reading) => {
+            if (logFilter === 'all') return true;
+            const isOffline = reading.offline === true || reading.offline === 1 || reading.offline === '1';
+            return logFilter === 'offline' ? isOffline : !isOffline;
+        });
+    const logTotalPages = Math.max(1, Math.ceil(allLogs.length / itemsPerPage));
+    if (logCurrentPage < logTotalPages) {
+        logCurrentPage++;
+        renderTables();
+    }
+});
+
 document.getElementById('force-sync').addEventListener('click', refreshData);
 document.getElementById('export-logs').addEventListener('click', () => {
     const offlineReadings = (appData.readings || []).filter(reading => reading.offline == true);

@@ -13,12 +13,12 @@
     <div class="system-grid">
         <div class="system-card">
             <i data-lucide="wifi"></i>
-            <small>Device Status</small>
+            <small>Status Alat</small>
             <strong id="system-device-status">-</strong>
         </div>
         <div class="system-card">
             <i data-lucide="navigation"></i>
-            <small>GPS Lock</small>
+            <small>Status GPS</small>
             <strong id="system-gps-lock">-</strong>
         </div>
         <div class="system-card">

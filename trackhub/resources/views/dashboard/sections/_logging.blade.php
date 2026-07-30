@@ -49,7 +49,7 @@
                 <select id="log-filter">
                     <option value="all">Tipe: Semua</option>
                     <option value="realtime">Log Real-time</option>
-                    <option value="offline">Log Offline (SD)</option>
+                    <option value="offline" selected>Log Offline (SD)</option>
                 </select>
             </div>
             <table>
@@ -64,6 +64,12 @@
                 </thead>
                 <tbody id="log-table"></tbody>
             </table>
+            {{-- Pagination Controls --}}
+            <div class="pagination" id="log-pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-top: 1px solid #e6ebf4;">
+                <button class="outline-btn" id="log-prev-btn" style="height: 36px; padding: 0 14px; font-size: 13px;">Sebelumnya</button>
+                <span id="log-page-info" style="font-size: 14px; color: var(--muted); font-weight: 500;">Halaman 1 dari 1</span>
+                <button class="outline-btn" id="log-next-btn" style="height: 36px; padding: 0 14px; font-size: 13px;">Selanjutnya</button>
+            </div>
         </div>
     </div>
 </section>

@@ -49,6 +49,12 @@
             </thead>
             <tbody id="history-table"></tbody>
         </table>
+        {{-- Pagination Controls --}}
+        <div class="pagination" id="history-pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-top: 1px solid #e6ebf4;">
+            <button class="outline-btn" id="history-prev-btn" style="height: 36px; padding: 0 14px; font-size: 13px;">Sebelumnya</button>
+            <span id="history-page-info" style="font-size: 14px; color: var(--muted); font-weight: 500;">Halaman 1 dari 1</span>
+            <button class="outline-btn" id="history-next-btn" style="height: 36px; padding: 0 14px; font-size: 13px;">Selanjutnya</button>
+        </div>
     </div>
 
     {{-- Route Map (full width) --}}
