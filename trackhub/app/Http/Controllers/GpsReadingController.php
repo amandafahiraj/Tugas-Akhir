@@ -89,6 +89,17 @@ class GpsReadingController extends Controller
 
         $latest = (clone $readingsQuery)->latest('recorded_at')->latest()->first()
             ?? GpsReading::latest('recorded_at')->latest()->first();
+
+        // Ambil data heartbeat dari cache untuk mendeteksi update ketika GPS belum lock (koordinat null)
+        $cachedHeartbeat = cache('last_heartbeat_esp32-gps-01');
+        if ($cachedHeartbeat) {
+            $cachedReading = new GpsReading($cachedHeartbeat);
+            // Gunakan data cache jika ia lebih baru daripada data di database
+            if (!$latest || Carbon::parse($cachedReading->recorded_at)->gt($latest->recorded_at)) {
+                $latest = $cachedReading;
+            }
+        }
+
         $readings = $readingsQuery->latest('recorded_at')->latest()->take(10000)->get();
         $trackingPath = $trackingPathQuery
             ->latest()
@@ -109,6 +120,7 @@ class GpsReadingController extends Controller
             'tracking_path' => $trackingPath,
             'total' => GpsReading::count(),
             'tracked_devices' => GpsReading::distinct('device_id')->count('device_id'),
+            'server_time' => now()->toIso8601String(),
         ];
     }
 

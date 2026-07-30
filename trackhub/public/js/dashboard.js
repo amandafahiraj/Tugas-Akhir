@@ -504,6 +504,12 @@ const render = (data) => {
     const distance = distanceKm(path);
     const hasCoordinates = Array.isArray(data.coordinates) && data.coordinates.length === 2;
 
+    // Hitung status keaktifan perangkat secara real-time
+    const serverTime = data.server_time ? new Date(data.server_time) : new Date();
+    const recordedAt = latest ? new Date(latest.recorded_at) : null;
+    const isDeviceActive = latest && recordedAt && (serverTime - recordedAt) < 60 * 1000;
+    const hasGpsFix = latest && latest.latitude !== null && latest.longitude !== null;
+
     set('total', data.total ?? 0);
     set('system-total', data.total ?? 0);
     set('mini-pending', offlineCount);
@@ -515,10 +521,41 @@ const render = (data) => {
     setWidth('storage-bar', Math.min(100, readings.length));
     setWidth('reliability-bar', reliability);
 
+    // Update status badge di Vehicle Details Card (Dashboard View)
+    const devBadge = document.getElementById('device-status-badge');
+    if (devBadge) {
+        const label = devBadge.querySelector('.label');
+        if (isDeviceActive) {
+            devBadge.className = 'status-badge device-online';
+            label.textContent = 'Device: Active';
+        } else {
+            devBadge.className = 'status-badge device-offline';
+            label.textContent = 'Device: Inactive';
+        }
+    }
+
+    const gpsBadge = document.getElementById('gps-lock-badge');
+    if (gpsBadge) {
+        const label = gpsBadge.querySelector('.label');
+        if (hasGpsFix) {
+            gpsBadge.className = 'status-badge gps-fixed';
+            label.textContent = 'GPS: Locked';
+        } else {
+            gpsBadge.className = 'status-badge gps-no-fix';
+            label.textContent = 'GPS: No Fix';
+        }
+    }
+
+    // Update status di System View
+    set('system-device-status', isDeviceActive ? 'Active' : 'Inactive');
+    set('system-gps-lock', hasGpsFix ? 'GPS Fixed' : 'No Fix');
+
     if (!latest) {
         set('connection-label', 'Waiting');
         set('stream-status', 'Waiting for GPS data from ESP32');
         set('system-connection', 'Waiting');
+        set('system-device-status', 'Waiting');
+        set('system-gps-lock', 'Waiting');
         renderTables();
         return;
     }
@@ -601,6 +638,13 @@ const refreshData = async () => {
     } catch (error) {
         set('stream-status', 'Unable to refresh GPS data');
         set('system-connection', 'Offline');
+        set('system-device-status', 'Offline');
+        set('system-gps-lock', 'Offline');
+        const devBadge = document.getElementById('device-status-badge');
+        if (devBadge) {
+            devBadge.className = 'status-badge device-offline';
+            devBadge.querySelector('.label').textContent = 'Server Offline';
+        }
     } finally {
         isRefreshing = false;
     }

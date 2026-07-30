@@ -154,16 +154,18 @@ void loop() {
   if (millis() - lastPostMs >= publishIntervalMs) {
     printGPSData();
 
-    if (gps.location.isValid()) {
-      String payload = buildGpsPayload(false);
+    bool gpsLocked = gps.location.isValid();
+    String payload = buildGpsPayload(false);
 
+    if (gpsLocked) {
       if (sendPayload(payload)) {
         syncQueuedPayloads();
       } else {
         enqueueJsonPayload(buildGpsPayload(true));
       }
     } else {
-      Serial.println("GPS belum lock satelit. Data tidak disimpan.");
+      Serial.println("GPS belum lock satelit. Mengirim heartbeat status ke MQTT...");
+      sendPayload(payload);
     }
 
     lastPostMs = millis();

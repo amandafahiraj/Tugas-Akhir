@@ -30,8 +30,9 @@ class GpsReadingIngestor
             'offline' => ['nullable', 'boolean'],
         ])->validate();
 
-        return GpsReading::create([
-            'device_id' => $validated['device_id'] ?? 'esp32-gps-01',
+        $deviceId = $validated['device_id'] ?? 'esp32-gps-01';
+        $heartbeatData = [
+            'device_id' => $deviceId,
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'altitude_m' => $validated['altitude_m'] ?? $validated['altitude'] ?? null,
@@ -41,6 +42,17 @@ class GpsReadingIngestor
             'raw_nmea' => $validated['raw_nmea'] ?? null,
             'recorded_at' => $validated['recorded_at'] ?? now(),
             'offline' => $validated['offline'] ?? false,
-        ]);
+        ];
+
+        // 1. Simpan heartbeat terbaru ke Cache
+        cache()->put("last_heartbeat_{$deviceId}", $heartbeatData, now()->addMinutes(10));
+
+        // 2. Hanya simpan ke database jika GPS sudah lock satelit (latitude & longitude tidak null)
+        if ($validated['latitude'] !== null && $validated['longitude'] !== null) {
+            return GpsReading::create($heartbeatData);
+        }
+
+        // Jika GPS belum lock, kembalikan instance model sementara (unsaved)
+        return new GpsReading($heartbeatData);
     }
 }

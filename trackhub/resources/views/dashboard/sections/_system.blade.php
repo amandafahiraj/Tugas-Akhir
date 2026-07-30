@@ -13,18 +13,23 @@
     <div class="system-grid">
         <div class="system-card">
             <i data-lucide="wifi"></i>
-            <small>Connection</small>
-            <strong id="system-connection">-</strong>
+            <small>Device Status</small>
+            <strong id="system-device-status">-</strong>
         </div>
         <div class="system-card">
-            <i data-lucide="database"></i>
-            <small>Total Logs</small>
-            <strong id="system-total">0</strong>
+            <i data-lucide="navigation"></i>
+            <small>GPS Lock</small>
+            <strong id="system-gps-lock">-</strong>
         </div>
         <div class="system-card">
             <i data-lucide="satellite"></i>
             <small>Satellites</small>
             <strong id="system-sat">-</strong>
+        </div>
+        <div class="system-card">
+            <i data-lucide="database"></i>
+            <small>Total Logs</small>
+            <strong id="system-total">0</strong>
         </div>
         <div class="system-card">
             <i data-lucide="clock"></i>

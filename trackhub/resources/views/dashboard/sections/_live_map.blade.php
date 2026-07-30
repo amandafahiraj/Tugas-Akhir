@@ -27,6 +27,18 @@
                 <span class="live-pill">LIVE</span>
             </div>
             <div class="details-body">
+                {{-- Status Badges --}}
+                <div class="status-badge-container">
+                    <div id="device-status-badge" class="status-badge device-offline">
+                        <span class="dot"></span>
+                        <span class="label">Device: Inactive</span>
+                    </div>
+                    <div id="gps-lock-badge" class="status-badge gps-no-fix">
+                        <span class="dot"></span>
+                        <span class="label">GPS: No Fix</span>
+                    </div>
+                </div>
+
                 <div class="coord-grid">
                     <div class="coord-box">
                         <span>Latitude</span>

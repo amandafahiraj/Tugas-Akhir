@@ -738,7 +738,7 @@ th {
 
 .system-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 18px;
 }
 
@@ -783,4 +783,70 @@ th {
     .coord-grid, .summary-cards, .system-grid, .pipeline-body { grid-template-columns: 1fr; }
     .page-head { display: block; }
     th, td { padding: 14px; }
+}
+
+/* Status Badges */
+.status-badge-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.status-badge {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.device-online {
+    background-color: #e8faee;
+    color: #087a35;
+    border-color: #a7f3d0;
+}
+
+.device-offline {
+    background-color: #fef3f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.gps-fixed {
+    background-color: #e8faee;
+    color: #087a35;
+    border-color: #a7f3d0;
+}
+
+.gps-no-fix {
+    background-color: #fffbeb;
+    color: #b45309;
+    border-color: #fef3c7;
+}
+
+.status-badge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: currentColor;
+}
+
+.device-online .dot, .gps-fixed .dot {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.device-offline .dot {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.gps-no-fix .dot {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
 }
