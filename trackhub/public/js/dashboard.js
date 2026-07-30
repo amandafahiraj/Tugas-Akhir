@@ -555,7 +555,7 @@ const render = (data) => {
     const serverTime = data.server_time ? new Date(data.server_time) : new Date();
     const recordedAt = latest ? new Date(latest.recorded_at) : null;
     const isDeviceActive = latest && recordedAt && (serverTime - recordedAt) < 60 * 1000;
-    const hasGpsFix = isDeviceActive && latest && latest.latitude !== null && latest.longitude !== null;
+    const hasGpsFix = latest && latest.latitude !== null && latest.longitude !== null;
 
     set('total', data.total ?? 0);
     set('system-total', data.total ?? 0);

@@ -17,7 +17,7 @@ TinyGPSPlus gps;
 // =========================
 // SD CARD (SPI)
 // =========================
-#define SD_CS    5    // CS modul SD ke D5/GPIO5
+#define SD_CS    5    
 #define SD_SCK   18
 #define SD_MISO  19
 #define SD_MOSI  23
