@@ -15,14 +15,35 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Pastikan User manju (ID 2) ada
+        $user = User::where('email', 'manju@gmail.com')->first();
+        if (!$user) {
+            $user = User::where('id', 2)->first();
+        }
+        if (!$user) {
+            $user = User::updateOrCreate(
+                ['email' => 'manju@gmail.com'],
+                [
+                    'id' => 2,
+                    'name' => 'manju',
+                    'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                ]
+            );
+        }
 
-        User::updateOrCreate(
-            ['email' => 'test@example.com'],
+        // 2. Petakan device "esp32-gps-01" ke User ID 2
+        \App\Models\Device::updateOrCreate(
+            ['device_id' => 'esp32-gps-01'],
             [
-                'name' => 'Test User',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'user_id' => $user->id,
+                'name' => 'ESP32 GPS Tracker 01',
             ]
         );
+
+        // 3. Perbarui data koordinat lama agar terhubung ke user ini (ID 2)
+        \App\Models\GpsReading::where('device_id', 'esp32-gps-01')
+            ->whereNull('user_id')
+            ->update(['user_id' => $user->id]);
     }
+
 }

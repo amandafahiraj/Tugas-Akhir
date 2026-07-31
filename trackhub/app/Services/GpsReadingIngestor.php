@@ -31,7 +31,13 @@ class GpsReadingIngestor
         ])->validate();
 
         $deviceId = $validated['device_id'] ?? 'esp32-gps-01';
+
+        // Cari user_id berdasarkan device_id dari database
+        $device = \App\Models\Device::where('device_id', $deviceId)->first();
+        $userId = $device ? $device->user_id : null;
+
         $heartbeatData = [
+            'user_id' => $userId,
             'device_id' => $deviceId,
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
@@ -43,6 +49,7 @@ class GpsReadingIngestor
             'recorded_at' => $validated['recorded_at'] ?? now(),
             'offline' => $validated['offline'] ?? false,
         ];
+
 
         // 1. Simpan heartbeat terbaru ke Cache
         cache()->put("last_heartbeat_{$deviceId}", $heartbeatData, now()->addMinutes(10));
