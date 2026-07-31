@@ -997,3 +997,61 @@
 1785460573: Client trackhub-laravel-subscriber [172.18.0.5:58494] disconnected: exceeded timeout.
 1785460579: New connection from 172.18.0.5:40378 on port 1883.
 1785460579: New client connected from 172.18.0.5:40378 as trackhub-laravel-subscriber (p4, c1, k30).
+1785460609: Client esp32-gps-01-32a50528 [172.18.0.1:47784] disconnected: exceeded timeout.
+1785461429: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1785461598: Client trackhub-laravel-subscriber [172.18.0.5:40378] disconnected: connection closed by client.
+1785461598: mosquitto version 2.1.2 terminating
+1785461598: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1785490610: mosquitto version 2.1.2 starting
+1785490610: Config loaded from /mosquitto/config/mosquitto.conf.
+1785490610: Bridge support available.
+1785490610: Persistence support available.
+1785490610: TLS support available.
+1785490610: TLS-PSK support available.
+1785490610: Websockets support available.
+1785490610: Opening ipv4 listen socket on port 1883.
+1785490610: mosquitto version 2.1.2 running
+1785490645: New connection from 172.18.0.6:36568 on port 1883.
+1785490645: New client connected from 172.18.0.6:36568 as trackhub-laravel-subscriber (p4, c1, k30).
+1785492411: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1785493461: Client trackhub-laravel-subscriber [172.18.0.6:36568] disconnected: connection closed by client.
+1785493462: mosquitto version 2.1.2 terminating
+1785493462: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1785513049: mosquitto version 2.1.2 starting
+1785513049: Config loaded from /mosquitto/config/mosquitto.conf.
+1785513049: Bridge support available.
+1785513049: Persistence support available.
+1785513049: TLS support available.
+1785513049: TLS-PSK support available.
+1785513049: Websockets support available.
+1785513049: Opening ipv4 listen socket on port 1883.
+1785513049: mosquitto version 2.1.2 running
+1785513080: New connection from 172.18.0.4:46552 on port 1883.
+1785513080: New client connected from 172.18.0.4:46552 as trackhub-laravel-subscriber (p4, c1, k30).
+1785514667: New connection from 172.18.0.1:58484 on port 1883.
+1785514667: New client connected from 172.18.0.1:58484 as esp32-gps-01-32a50528 (p4, c1, k15).
+1785514707: Client trackhub-laravel-subscriber [172.18.0.4:46552] disconnected: exceeded timeout.
+1785514712: New connection from 172.18.0.4:53890 on port 1883.
+1785514712: New client connected from 172.18.0.4:53890 as trackhub-laravel-subscriber (p4, c1, k30).
+1785514720: Client esp32-gps-01-32a50528 [172.18.0.1:58484] disconnected: exceeded timeout.
+1785514849: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1785515162: New connection from 172.18.0.1:54008 on port 1883.
+1785515162: New client connected from 172.18.0.1:54008 as esp32-gps-01-32a50528 (p4, c1, k15).
+1785515198: Client trackhub-laravel-subscriber [172.18.0.4:53890] disconnected: exceeded timeout.
+1785515203: New connection from 172.18.0.4:36636 on port 1883.
+1785515203: New client connected from 172.18.0.4:36636 as trackhub-laravel-subscriber (p4, c1, k30).
+1785515255: Client esp32-gps-01-32a50528 [172.18.0.1:54008] disconnected: exceeded timeout.
+1785515256: New connection from 172.18.0.1:43340 on port 1883.
+1785515256: New client connected from 172.18.0.1:43340 as esp32-gps-01-32a50528 (p4, c1, k15).
+1785515288: Client esp32-gps-01-32a50528 [172.18.0.1:43340] disconnected: exceeded timeout.
+1785515350: New connection from 172.18.0.1:47912 on port 1883.
+1785515350: New client connected from 172.18.0.1:47912 as esp32-gps-01-32a50528 (p4, c1, k15).
+1785515390: New connection from 172.18.0.1:33796 on port 1883.
+1785515390: Client esp32-gps-01-32a50528 [172.18.0.1:47912] disconnected: session taken over.
+1785515390: New client connected from 172.18.0.1:33796 as esp32-gps-01-32a50528 (p4, c1, k15).
+1785515413: Client esp32-gps-01-32a50528 [172.18.0.1:33796] disconnected: exceeded timeout.
+1785515613: New connection from 172.18.0.1:38842 on port 1883.
+1785515613: New client connected from 172.18.0.1:38842 as esp32-gps-01-32a50528 (p4, c1, k15).
+1785515656: Client trackhub-laravel-subscriber [172.18.0.4:36636] disconnected: exceeded timeout.
+1785515661: New connection from 172.18.0.4:54220 on port 1883.
+1785515661: New client connected from 172.18.0.4:54220 as trackhub-laravel-subscriber (p4, c1, k30).
