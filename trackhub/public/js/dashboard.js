@@ -428,12 +428,12 @@ const ensureHistoryMap = async (forceFit = false) => {
 
         if (totalDistance < 0.02) {
             // Jika pergerakan sangat kecil (di bawah 20 meter), gambarkan koordinat mentah langsung
-            drawHistoryRoute(points, forceFit || routeChanged);
+            drawHistoryRoute(points, forceFit);
         } else {
             // Jika pergerakan signifikan, gunakan road snapping (OSRM)
             const routedPoints = await fetchRoadRoute(points);
             if (activeView === 'history') {
-                drawHistoryRoute(routedPoints, forceFit || routeChanged);
+                drawHistoryRoute(routedPoints, forceFit);
             }
         }
 
