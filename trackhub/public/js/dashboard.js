@@ -423,11 +423,18 @@ const ensureHistoryMap = async (forceFit = false) => {
             lastHistoryRouteKey = currentRouteKey;
         }
 
-        drawHistoryRoute(points, forceFit || routeChanged);
-        const routedPoints = await fetchRoadRoute(points);
+        // Hitung total jarak pergerakan mentah (dalam kilometer)
+        const totalDistance = distanceKm(readings);
 
-        if (activeView === 'history') {
-            drawHistoryRoute(routedPoints, forceFit || routeChanged);
+        if (totalDistance < 0.02) {
+            // Jika pergerakan sangat kecil (di bawah 20 meter), gambarkan koordinat mentah langsung
+            drawHistoryRoute(points, forceFit || routeChanged);
+        } else {
+            // Jika pergerakan signifikan, gunakan road snapping (OSRM)
+            const routedPoints = await fetchRoadRoute(points);
+            if (activeView === 'history') {
+                drawHistoryRoute(routedPoints, forceFit || routeChanged);
+            }
         }
 
         syncHistoryMapControls();
