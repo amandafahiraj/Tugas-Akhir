@@ -10,6 +10,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+//command yang membaca konfigurasi di .env untuk terhubung secara terus-menerus ke broker dan mensubscribe topic trackhub/gps
 Artisan::command('mqtt:listen', function (GpsReadingIngestor $ingestor) {
     $topic = config('mqtt.topic');
     $this->info(sprintf(
@@ -31,7 +32,7 @@ Artisan::command('mqtt:listen', function (GpsReadingIngestor $ingestor) {
         );
 
         try {
-            $client->connect();
+            $client->connect(); //server laravel melakukan SUBSCRIBE ke topik yang sama untuk memantau dan menarik data secara real-time begitu ada kiriman baru dari ESP32
             $client->subscribe($topic);
             $this->info('MQTT connected and subscribed.');
 
@@ -40,7 +41,7 @@ Artisan::command('mqtt:listen', function (GpsReadingIngestor $ingestor) {
                 if ($message === null) {
                     continue;
                 }
-
+                // jika payload JSON yang diterima Laravel tidak valid atau formatnya salah
                 $payload = json_decode($message['payload'], true);
                 if (! is_array($payload)) {
                     $this->warn('Ignored MQTT message with invalid JSON.');

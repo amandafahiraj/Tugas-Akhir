@@ -850,3 +850,21 @@ th {
 .gps-no-fix .dot {
     box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
 }
+
+/* Badge Hari Ini dan Sebelumnya */
+.badge.today {
+    background-color: var(--blue-soft);
+    color: var(--blue);
+    font-size: 10px;
+    padding: 3px 8px;
+    margin-left: 8px;
+}
+
+.badge.previous {
+    background-color: #f1f5f9;
+    color: var(--muted);
+    font-size: 10px;
+    padding: 3px 8px;
+    margin-left: 8px;
+}
+

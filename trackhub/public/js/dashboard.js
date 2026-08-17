@@ -311,7 +311,35 @@ const fetchRoadRoute = async (points) => {
     }
 };
 
-const drawHistoryRoute = (points, forceFit = false) => {
+const routeColors = [
+    '#12b76a', // Green
+    '#3b82f6', // Blue
+    '#f59e0b', // Amber/Orange
+    '#d92d20', // Red
+    '#a855f7', // Purple
+    '#0ea5e9', // Sky Blue
+    '#ec4899', // Pink
+    '#14b8a6', // Teal
+];
+
+const getLocalDateString = (recordedAt) => {
+    if (!recordedAt) return '';
+    const d = new Date(recordedAt);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const formatLocalDate = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const drawHistoryRoute = (dayRoutes, forceFit = false) => {
     try {
         if (historyLine) {
             historyLine.remove();
@@ -323,48 +351,54 @@ const drawHistoryRoute = (points, forceFit = false) => {
             historyMarkerLayer = null;
         }
 
-        if (!points || points.length === 0) {
+        if (!dayRoutes || dayRoutes.length === 0) {
             return;
         }
 
+        historyLine = L.featureGroup().addTo(historyMap);
         historyMarkerLayer = L.layerGroup().addTo(historyMap);
 
-        if (points.length === 1) {
+        dayRoutes.forEach((route) => {
+            const color = route.color;
+            const points = route.points;
+
+            if (points.length === 0) return;
+
+            if (points.length === 1) {
+                L.circleMarker(points[0], {
+                    radius: 8,
+                    color: '#ffffff',
+                    fillColor: color,
+                    fillOpacity: 1,
+                    weight: 3,
+                }).addTo(historyMarkerLayer);
+                return;
+            }
+
+            L.polyline(points, {
+                color: color,
+                weight: 5,
+                opacity: 0.88,
+                lineJoin: 'round',
+                lineCap: 'round',
+            }).addTo(historyLine);
+
             L.circleMarker(points[0], {
-                radius: 8,
+                radius: 6,
                 color: '#ffffff',
-                fillColor: '#26d9ff',
+                fillColor: color,
                 fillOpacity: 1,
                 weight: 3,
             }).addTo(historyMarkerLayer);
 
-            historyMap.setView(points[0], 16);
-            return;
-        }
-
-        historyLine = L.polyline(points, {
-            color: '#17c9ee',
-            weight: 5,
-            opacity: 0.88,
-            lineJoin: 'round',
-            lineCap: 'round',
-        }).addTo(historyMap);
-
-        L.circleMarker(points[0], {
-            radius: 6,
-            color: '#ffffff',
-            fillColor: '#12b76a',
-            fillOpacity: 1,
-            weight: 3,
-        }).addTo(historyMarkerLayer);
-
-        L.circleMarker(points[points.length - 1], {
-            radius: 8,
-            color: '#ffffff',
-            fillColor: '#26d9ff',
-            fillOpacity: 1,
-            weight: 3,
-        }).addTo(historyMarkerLayer);
+            L.circleMarker(points[points.length - 1], {
+                radius: 8,
+                color: '#ffffff',
+                fillColor: color,
+                fillOpacity: 1,
+                weight: 3,
+            }).addTo(historyMarkerLayer);
+        });
 
         const bounds = historyLine.getBounds();
         if (bounds.isValid() && forceFit) {
@@ -412,6 +446,10 @@ const ensureHistoryMap = async (forceFit = false) => {
                 historyMarkerLayer.remove();
                 historyMarkerLayer = null;
             }
+            if (historyMap.legendControl) {
+                historyMap.legendControl.remove();
+                historyMap.legendControl = null;
+            }
             historyMap.setView([-6.2, 106.82], 12);
             lastHistoryRouteKey = null;
             return;
@@ -423,19 +461,113 @@ const ensureHistoryMap = async (forceFit = false) => {
             lastHistoryRouteKey = currentRouteKey;
         }
 
+        // Group readings by day
+        const readingsByDay = {};
+        readings.forEach((r) => {
+            const dayKey = getLocalDateString(r.recorded_at);
+            if (!readingsByDay[dayKey]) {
+                readingsByDay[dayKey] = [];
+            }
+            readingsByDay[dayKey].push(r);
+        });
+
+        const days = Object.keys(readingsByDay).sort();
+        
+        const dayColorMap = {};
+        days.forEach((day, index) => {
+            dayColorMap[day] = routeColors[index % routeColors.length];
+        });
+
+        const dayRoutes = [];
+        for (const day of days) {
+            const dayReadings = readingsByDay[day];
+            const dayPoints = dayReadings
+                .map((point) => [Number(point.latitude), Number(point.longitude)])
+                .reverse()
+                .filter((point) => Number.isFinite(point[0]) && Number.isFinite(point[1]));
+
+            if (dayPoints.length > 0) {
+                dayRoutes.push({
+                    day: day,
+                    color: dayColorMap[day],
+                    points: dayPoints
+                });
+            }
+        }
+
         // Hitung total jarak pergerakan mentah (dalam kilometer)
         const totalDistance = distanceKm(readings);
 
         if (totalDistance < 0.02) {
             // Jika pergerakan sangat kecil (di bawah 20 meter), gambarkan koordinat mentah langsung
-            drawHistoryRoute(points, forceFit);
+            drawHistoryRoute(dayRoutes, forceFit);
         } else {
             // Jika pergerakan signifikan, gunakan road snapping (OSRM)
-            const routedPoints = await fetchRoadRoute(points);
+            for (const route of dayRoutes) {
+                if (route.points.length >= 2) {
+                    route.points = await fetchRoadRoute(route.points);
+                }
+            }
             if (activeView === 'history') {
-                drawHistoryRoute(routedPoints, forceFit);
+                drawHistoryRoute(dayRoutes, forceFit);
             }
         }
+
+        // Setup Map Legend
+        if (historyMap.legendControl) {
+            historyMap.legendControl.remove();
+            historyMap.legendControl = null;
+        }
+
+        const legend = L.control({ position: 'topright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'map-legend-panel');
+            let legendItems = '';
+            dayRoutes.forEach((route) => {
+                const formattedDate = formatLocalDate(route.day);
+                legendItems += `
+                    <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                        <span style="display: inline-block; width: 24px; height: 4px; background: ${route.color}; margin-right: 8px; border-radius: 2px;"></span>
+                        <span style="color: var(--ink); font-weight: 500;">${formattedDate}</span>
+                    </div>
+                `;
+            });
+
+            div.innerHTML = `
+                <div style="background: white; padding: 10px 14px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 12px; line-height: 18px; min-width: 150px;">
+                    <div id="legend-toggle-header" style="font-weight: bold; margin-bottom: 6px; color: var(--ink); display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                        <span>Keterangan Rute</span>
+                        <span id="legend-toggle-arrow" style="font-size: 9px; color: var(--muted);">▼</span>
+                    </div>
+                    <div id="legend-scroll-content" style="max-height: 140px; overflow-y: auto; transition: max-height 0.2s ease;">
+                        ${legendItems}
+                    </div>
+                </div>
+            `;
+
+            // Logic klik untuk menyembunyikan/menampilkan isi legenda
+            setTimeout(() => {
+                const header = div.querySelector('#legend-toggle-header');
+                const content = div.querySelector('#legend-scroll-content');
+                const arrow = div.querySelector('#legend-toggle-arrow');
+                if (header && content && arrow) {
+                    header.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (content.style.display === 'none') {
+                            content.style.display = 'block';
+                            arrow.textContent = '▼';
+                        } else {
+                            content.style.display = 'none';
+                            arrow.textContent = '▲';
+                        }
+                    });
+                }
+            }, 50);
+
+            return div;
+        };
+        legend.addTo(historyMap);
+        historyMap.legendControl = legend;
 
         syncHistoryMapControls();
     } catch (error) {
@@ -461,6 +593,25 @@ const filteredReadings = () => {
 const renderTables = () => {
     // 1. History Table Pagination
     const historyReadings = filteredReadings();
+
+    // Group all filtered readings by day to assign colors consistently
+    const readingsByDay = {};
+    historyReadings.forEach((r) => {
+        const dayKey = getLocalDateString(r.recorded_at);
+        if (dayKey) {
+            if (!readingsByDay[dayKey]) {
+                readingsByDay[dayKey] = [];
+            }
+            readingsByDay[dayKey].push(r);
+        }
+    });
+    const days = Object.keys(readingsByDay).sort();
+
+    const dayColorMap = {};
+    days.forEach((day, index) => {
+        dayColorMap[day] = routeColors[index % routeColors.length];
+    });
+
     const historyTotal = historyReadings.length;
     const historyTotalPages = Math.max(1, Math.ceil(historyTotal / itemsPerPage));
     
@@ -470,16 +621,27 @@ const renderTables = () => {
     
     const historyStart = (historyCurrentPage - 1) * itemsPerPage;
     const historyRows = historyReadings.slice(historyStart, historyStart + itemsPerPage);
-    
+
     document.getElementById('history-table').innerHTML = historyRows.length
-        ? historyRows.map((reading) => `
-            <tr>
-                <td>${escapeHtml(formatTime(reading.recorded_at))}</td>
-                <td>${escapeHtml(formatNumber(reading.latitude, 6))}</td>
-                <td>${escapeHtml(formatNumber(reading.longitude, 6))}</td>
-                <td>${statusBadge(reading)}</td>
-            </tr>
-        `).join('')
+        ? historyRows.map((reading) => {
+            const dayKey = getLocalDateString(reading.recorded_at);
+            const dayColor = dayColorMap[dayKey] || '#61708a';
+            const formattedDate = formatLocalDate(dayKey);
+            const dayBadge = `<span class="badge" style="background-color: ${dayColor}15; color: ${dayColor}; font-size: 10px; padding: 3px 8px; margin-left: 8px; border: 1px solid ${dayColor}30; white-space: nowrap;">${formattedDate}</span>`;
+            return `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <span>${escapeHtml(formatTime(reading.recorded_at))}</span>
+                            ${dayBadge}
+                        </div>
+                    </td>
+                    <td>${escapeHtml(formatNumber(reading.latitude, 6))}</td>
+                    <td>${escapeHtml(formatNumber(reading.longitude, 6))}</td>
+                    <td>${statusBadge(reading)}</td>
+                </tr>
+            `;
+        }).join('')
         : '<tr><td colspan="4">No tracking history available.</td></tr>';
 
     set('history-page-info', `Halaman ${historyCurrentPage} dari ${historyTotalPages} (${historyTotal} data)`);
@@ -789,7 +951,7 @@ render(initialData);
 showView(activeView, false);
 syncDashboardMapControls();
 syncHistoryMapControls();
-setInterval(refreshData, 2000);
+setInterval(refreshData, 2000); // setInterval(refreshData, 2000) akan memanggil fungsi refreshData setiap 2000 milidetik (2 detik).
 
 window.addEventListener('popstate', (event) => {
     const view = event.state?.view || 'dashboard';

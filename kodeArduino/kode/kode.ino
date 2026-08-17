@@ -28,16 +28,17 @@ SPIClass sdSPI(VSPI);
 // MQTT
 // =========================
 const char* deviceId = "esp32-gps-01";
-const char* mqttBroker = "100.50.177.16"; //// ip wajib ganti kalau ganti jaringan
-const uint16_t mqttPort = 1883;
-const char* mqttTopic = "trackhub/gps";
+const char* mqttBroker = "100.50.177.16"; //IP Server MQTT 
+const uint16_t mqttPort = 1883; //port server MQTT Broker
+const char* mqttTopic = "trackhub/gps"; //topic (saluran pengiriman data)
 const char* mqttUser = "";
 const char* mqttPassword = "";
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-const unsigned long publishIntervalMs = 5000;
+const unsigned long publishIntervalMs = 5000;  // 5 detik real-time
+const unsigned long stationaryPublishIntervalMs = 60000; // 1 menit saat diam
 const bool debugRawNmea = false;
 
 // =========================
@@ -151,10 +152,13 @@ void loop() {
     }
   }
 
-  if (millis() - lastPostMs >= publishIntervalMs) {
+  bool gpsLocked = gps.location.isValid();
+  bool isMoving = gpsLocked && gps.speed.isValid() && (gps.speed.kmph() > 2.0);
+  unsigned long currentInterval = isMoving ? publishIntervalMs : stationaryPublishIntervalMs;
+
+  if (millis() - lastPostMs >= currentInterval) {
     printGPSData();
 
-    bool gpsLocked = gps.location.isValid();
     String payload = buildGpsPayload(false);
 
     if (gpsLocked) {
@@ -266,8 +270,6 @@ void maintainSDCard() {
   initSDCard();
 }
 
-// ensureCsvHeader removed
-
 // =====================================================
 // PRINT GPS
 // =====================================================
@@ -368,7 +370,7 @@ bool sendPayload(String payload) {
     return false;
   }
 
-  bool ok = mqttClient.publish(mqttTopic, payload.c_str(), false);
+  bool ok = mqttClient.publish(mqttTopic, payload.c_str(), false); // perangkat keras melakukan pengiriman payload koordinat GPS ke broker menggunakan PUBLISH MQTT
   Serial.println(ok ? "MQTT publish OK." : "MQTT publish failed.");
   return ok;
 }
@@ -430,8 +432,8 @@ void syncQueuedPayloads() {
 
     bool publishSuccess = false;
 
-    // Hanya mencoba mengirim jika WiFi dan MQTT masih terhubung.
-    // Jika koneksi putus di tengah jalan, sisa data langsung disimpan ke temp tanpa mencoba kirim (agar tidak blocking).
+   
+    
     if (WiFi.status() == WL_CONNECTED && mqttClient.connected()) {
       if (sendPayload(row)) {
         publishSuccess = true;
@@ -461,7 +463,6 @@ void syncQueuedPayloads() {
   Serial.printf("Sync: sent=%d, remaining=%d\n", sent, kept);
 }
 
-// csvRowToPayload, parseCsvRow, csvJsonNumber, escapeCsv, csvDateTime removed
 
 String jsonNumber(bool valid, double value, int decimals) {
   return valid ? String(value, decimals) : "null";
